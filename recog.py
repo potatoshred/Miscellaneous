@@ -1,16 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import argparse
 import time
-
 import cv2
-import numpy as np
-
-parser = argparse.ArgumentParser()  # 创建ArgumentParser()对象
-parser.add_argument("-a", "--algorithm", help="m (or nothing) for meanShift and c for camshift")
-# 添加参数，这里意思是：在命令窗口输入时加入”-a XXX“ 可以采用不同的苏昂啊
-args = vars(parser.parse_args())  # 解析添加参数
-font = cv2.FONT_HERSHEY_SIMPLEX
 
 def main():
     camera = cv2.VideoCapture(3)
@@ -20,17 +11,15 @@ def main():
     bs.setHistory(history)
 
     cv2.namedWindow("RECING...")
-    pedestrians = {}
-    firstFrame = True
+
     frames = 0
 
     bell = False
-    fontFace = cv2.FONT_HERSHEY_COMPLEX
-    fontScale = 1
+    fontFace = cv2.FONT_HERSHEY_PLAIN
+    fontScale = 2
     fontcolor = (0, 255, 255)  # BGR
     thickness = 1
     lineType = 4
-    bottomLeftOrigin = 1
 
     while True:
         print(time.ctime(time.time()), "FRAME %d" % frames, end="\r")
@@ -55,21 +44,17 @@ def main():
         cyan = (255, 255, 255)
         lineWidth = 1
 
-        # 定点
+        # 边定点
         tx, ty, tz = 320, 380, 640
 
         cv2.line(frame, (0, ymin), (640, ymin), cyan, lineWidth)
-        # cv2.line(frame, (0, ymax), (640, ymax), cyan, lineWidth)
-        cv2.line(frame, (tx, 0), (tz, ty), cyan, lineWidth)
+        cv2.line(frame, (tx, 0), (tz, ty), cyan, lineWidth, cv2.LINE_AA)
 
         for c in contours:
             if cv2.contourArea(c) > 300:
                 (x, y, w, h) = cv2.boundingRect(c)
 
-                if \
-                        y + h > ymin \
-                        and (y+h-ty - (ty/(tz-tx))*(x-tz)) > 0\
-                        :
+                if y + h > ymin and (y+h-ty - (ty/(tz-tx))*(x-tz)) > 0:
                     bell = True
                     cv2.putText(frame, "?", (x, y), fontFace, fontScale, fontcolor, thickness, lineType)
 
@@ -81,14 +66,10 @@ def main():
             print("\a", end="\r")
             bell = False
 
-        for i, p in pedestrians.items():
-            p.update(frame)
-
-        firstFrame = False
         frames += 1
 
-        cv2.imshow("RECING...", cv2.resize(frame, (1600, 900)))
-        # cv2.imshow("RECING...", frame)
+        frame = cv2.resize(frame, (1600, 900))
+        cv2.imshow("RECING...", frame)
 
         if cv2.waitKey(24) & 0xff == 27:
             break
